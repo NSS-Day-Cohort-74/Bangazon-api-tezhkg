@@ -31,7 +31,7 @@ sudo apt install libtiff5-dev libjpeg8-dev libopenjp2-7-dev zlib1g-dev \
 7. Ensure that the correct Python Interpreter is chosen in VS Code.
 8. Start your debugger.
 
-## Postman Request Collection
+## Yaak Request Collection
 
 1. Open the [Yaak](https://yaak.app/) API client
 2. Click **Import**
