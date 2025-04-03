@@ -12,18 +12,26 @@ from rest_framework import serializers
 from rest_framework import status
 from bangazonapi.models import ProductCategory
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from .product import ProductSerializer
 
 
 class ProductCategorySerializer(serializers.HyperlinkedModelSerializer):
     """JSON serializer for product category"""
+    products = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductCategory
         url = serializers.HyperlinkedIdentityField(
             view_name='productcategory',
             lookup_field='id'
         )
-        fields = ('id', 'url', 'name')
+        fields = ('id', 'url', 'name', 'products')
+        depth = 1
 
+    def get_products(self, obj):
+        products = obj.products.order_by('-id')[:5]
+        return ProductSerializer(products, many=True).data
+    
 
 class ProductCategories(ViewSet):
     """Categories for products"""
