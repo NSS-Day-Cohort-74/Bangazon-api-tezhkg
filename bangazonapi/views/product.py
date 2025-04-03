@@ -95,7 +95,7 @@ class Products(ViewSet):
         serializer = ProductSerializer(data=data, context={'request':request})
 
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"Error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
         new_product = Product()
         new_product.name = request.data["name"]
