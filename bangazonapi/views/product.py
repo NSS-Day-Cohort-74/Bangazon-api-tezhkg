@@ -21,6 +21,11 @@ class ProductSerializer(serializers.ModelSerializer):
                   'quantity', 'created_date', 'location', 'image_path',
                   'average_rating', 'can_be_rated', )
         depth = 1
+    
+    def validate_price(self, value):
+        if value > 17500:
+            raise serializers.ValidationError("Price cannot exceed $17,500")
+        return value
 
 
 class Products(ViewSet):
@@ -84,6 +89,14 @@ class Products(ViewSet):
                 }
             }
         """
+        data = request.data.copy()
+        data["image_path"] = None
+
+        serializer = ProductSerializer(data=data, context={'request':request})
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
         new_product = Product()
         new_product.name = request.data["name"]
         new_product.price = request.data["price"]
@@ -106,10 +119,10 @@ class Products(ViewSet):
 
         new_product.save()
 
-        serializer = ProductSerializer(
+        result_serializer = ProductSerializer(
             new_product, context={'request': request})
 
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(result_serializer.data, status=status.HTTP_201_CREATED)
 
     def retrieve(self, request, pk=None):
         """
