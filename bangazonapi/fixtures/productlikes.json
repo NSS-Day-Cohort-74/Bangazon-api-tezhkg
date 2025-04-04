@@ -1,0 +1,122 @@
+[
+    {
+        "model": "bangazonapi.productlike",
+        "pk": 1,
+        "fields": {
+            "product": 35,
+            "customer": 5
+        }
+    },
+    {
+        "model": "bangazonapi.productlike",
+        "pk": 2,
+        "fields": {
+            "product": 12,
+            "customer": 4
+        }
+    },
+    {
+        "model": "bangazonapi.productlike",
+        "pk": 3,
+        "fields": {
+            "product": 24,
+            "customer": 7
+        }
+    },
+    {
+        "model": "bangazonapi.productlike",
+        "pk": 4,
+        "fields": {
+            "product": 8,
+            "customer": 6
+        }
+    },
+    {
+        "model": "bangazonapi.productlike",
+        "pk": 5,
+        "fields": {
+            "product": 42,
+            "customer": 4
+        }
+    },
+    {
+        "model": "bangazonapi.productlike",
+        "pk": 6,
+        "fields": {
+            "product": 19,
+            "customer": 5
+        }
+    },
+    {
+        "model": "bangazonapi.productlike",
+        "pk": 7,
+        "fields": {
+            "product": 27,
+            "customer": 6
+        }
+    },
+    {
+        "model": "bangazonapi.productlike",
+        "pk": 8,
+        "fields": {
+            "product": 35,
+            "customer": 7
+        }
+    },
+    {
+        "model": "bangazonapi.productlike",
+        "pk": 9,
+        "fields": {
+            "product": 14,
+            "customer": 6
+        }
+    },
+    {
+        "model": "bangazonapi.productlike",
+        "pk": 10,
+        "fields": {
+            "product": 31,
+            "customer": 5
+        }
+    },
+    {
+        "model": "bangazonapi.productlike",
+        "pk": 11,
+        "fields": {
+            "product": 22,
+            "customer": 4
+        }
+    },
+    {
+        "model": "bangazonapi.productlike",
+        "pk": 12,
+        "fields": {
+            "product": 17,
+            "customer": 7
+        }
+    },
+    {
+        "model": "bangazonapi.productlike",
+        "pk": 13,
+        "fields": {
+            "product": 39,
+            "customer": 5
+        }
+    },
+    {
+        "model": "bangazonapi.productlike",
+        "pk": 14,
+        "fields": {
+            "product": 5,
+            "customer": 6
+        }
+    },
+    {
+        "model": "bangazonapi.productlike",
+        "pk": 15,
+        "fields": {
+            "product": 29,
+            "customer": 4
+        }
+    }
+]

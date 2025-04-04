@@ -357,3 +357,18 @@ class Products(ViewSet):
             return Response(None, status=status.HTTP_204_NO_CONTENT)
 
         return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @action(methods=["get", "post", "delete"], detail=False)
+    def like(self, request):
+        current_user = Customer.objects.get(user=request.auth.user)
+        
+        if request.method == "POST":
+            
+            #Take the product like and compare to existing product likes
+            #if it exists, delete the productlike
+            #if it does not exist, create a new productlike   
+            
+            product_like = ProductLike.objects.filter(customer=current_user, product=request.data["product_id"])
+        
+            return Response(product_like.data)
+        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
