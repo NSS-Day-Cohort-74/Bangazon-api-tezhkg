@@ -25,8 +25,6 @@ class ProductSerializer(serializers.ModelSerializer):
         },
     )
 
-    is_liked = serializers.SerializerMethodField()
-
     class Meta:
         model = Product
         fields = (
@@ -41,7 +39,6 @@ class ProductSerializer(serializers.ModelSerializer):
             "image_path",
             "average_rating",
             "can_be_rated",
-            "is_liked"
         )
         depth = 1
 
@@ -50,6 +47,20 @@ class ProductSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Price cannot exceed $17,500")
         return value
     
+    # currently doing for all requests.. should just be on retrieve.
+    # this is causing the all products view to break.
+    # Could we just have different serializers for different methods?
+    # For example, a ProductRetrieveSerializer(ProductSerializer)? profile.py uses multiple serializers.
+    # Then, add the is_liked serializer method field to just that child serializer?
+
+
+
+class ProductDetailSerializer(ProductSerializer):
+    is_liked = serializers.SerializerMethodField()
+
+    class Meta(ProductSerializer.Meta):
+        fields = ProductSerializer.Meta.fields + ('is_liked',)
+
     def get_is_liked(self, obj):
         # Get current request
         request = self.context.get('request')
@@ -64,6 +75,7 @@ class ProductSerializer(serializers.ModelSerializer):
         # If they do not like the current product, return false
 
         return is_it_liked
+
 
 class Products(ViewSet):
     """Request handlers for Products in the Bangazon Platform"""
@@ -215,7 +227,7 @@ class Products(ViewSet):
         """
         try:
             product = Product.objects.get(pk=pk)
-            serializer = ProductSerializer(product, context={"request": request})
+            serializer = ProductDetailSerializer(product, context={"request": request})
             return Response(serializer.data)
         except Exception as ex:
             return HttpResponseServerError(ex)
