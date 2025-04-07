@@ -25,6 +25,8 @@ class ProductSerializer(serializers.ModelSerializer):
         },
     )
 
+    is_liked = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
         fields = (
@@ -39,6 +41,7 @@ class ProductSerializer(serializers.ModelSerializer):
             "image_path",
             "average_rating",
             "can_be_rated",
+            "is_liked"
         )
         depth = 1
 
@@ -46,7 +49,21 @@ class ProductSerializer(serializers.ModelSerializer):
         if value > 17500:
             raise serializers.ValidationError("Price cannot exceed $17,500")
         return value
+    
+    def get_is_liked(self, obj):
+        # Get current request
+        request = self.context.get('request')
+        
+        # Use data from the request to find whether the current user likes the current product
+        # Get the current user
+        current_user = Customer.objects.get(user=request.auth.user)
 
+        # Use the related name to check if this product has a like from this customer
+        is_it_liked = ProductLike.objects.filter(customer=current_user,product=obj.pk).exists()
+        # If they do like the current product, return true
+        # If they do not like the current product, return false
+
+        return is_it_liked
 
 class Products(ViewSet):
     """Request handlers for Products in the Bangazon Platform"""
