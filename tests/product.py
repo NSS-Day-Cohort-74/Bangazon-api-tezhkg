@@ -111,6 +111,7 @@ class ProductTests(APITestCase):
         # Create 2 Products
         self.test_create_product()
         self.test_create_product()
+        self.test_create_product()
 
         # Delete first product
         url = "/products/1"
@@ -122,10 +123,10 @@ class ProductTests(APITestCase):
         response = self.client.get(url, None, format="json")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-        # Get list of all products, make sure there is only 1 there.
+        # Get list of all products, make sure there are only 2 there.
         response = self.client.get("/products", None, format="json")
         json_response = json.loads(response.content)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(json_response), 1)
+        self.assertEqual(len(json_response), 2)
 
     # TODO: Product can be rated. Assert average rating exists.
