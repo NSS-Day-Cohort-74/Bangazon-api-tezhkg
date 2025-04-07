@@ -1,6 +1,7 @@
 import json
 from rest_framework import status
 from rest_framework.test import APITestCase
+import datetime
 
 
 class OrderTests(APITestCase):
@@ -80,5 +81,50 @@ class OrderTests(APITestCase):
         self.assertEqual(len(json_response["lineitems"]), 0)
 
     # TODO: Complete order by adding payment type
+
+    def test_complete_order_by_adding_payment_type(self):
+
+        # Add product to order"
+        self.test_add_product_to_order()
+
+        #Add payment method to profile:
+        url="/paymenttypes"
+        data = {'merchant_name':"American Depress",
+                'account_number':123456,
+                'expiration_date':"2026-01-15",
+                "create_date": datetime.date.today()} 
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
+        response = self.client.post(url, data, format='json')
+
+        # Verify payment was added
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        #Add payment type do order
+        url = "/orders/1"
+        data = {
+        "payment_type": 1
+        }
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
+        response = self.client.put(url, data, format='json')
+        
+        # Verify the order was completed successfully
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Get cart and verify payment type was added
+        url = "/orders/1"
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
+        response = self.client.get(url, None, format='json')
+        json_response = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json_response["id"], 1)
+
+
+        
+
+
+
+
+
 
     # TODO: New line item is not added to closed order
