@@ -9,7 +9,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Product, Customer, ProductCategory
+from bangazonapi.models import Product, Customer, ProductCategory, ProductLike
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 
@@ -358,17 +358,50 @@ class Products(ViewSet):
 
         return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    @action(methods=["get", "post", "delete"], detail=False)
-    def like(self, request):
+    @action(methods=["post", "delete"], detail=True)
+    def like(self, request,pk=None):
         current_user = Customer.objects.get(user=request.auth.user)
+        product_instance = Product.objects.get(pk=pk)
         
         if request.method == "POST":
-            
-            #Take the product like and compare to existing product likes
-            #if it exists, delete the productlike
-            #if it does not exist, create a new productlike   
-            
-            product_like = ProductLike.objects.filter(customer=current_user, product=request.data["product_id"])
+            product_like = ProductLike()
+            product_like.customer = current_user
+            product_like.product = product_instance
+
+            product_like.save()
+            return Response(None, status=status.HTTP_201_CREATED)
         
-            return Response(product_like.data)
+        if request.method == "DELETE":
+            try:
+                product_like = ProductLike.objects.get(customer=current_user,product=pk)
+                product_like.delete()
+
+                return Response({}, status=status.HTTP_204_NO_CONTENT)
+
+            except ProductLike.DoesNotExist as ex:
+                return Response({"message": ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+            
+            except Exception as ex:
+                return Response(
+                    {"message": ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+    @action(methods=["get"], detail=False)
+    def liked(self, request):
+        current_user = Customer.objects.get(user=request.auth.user)
+
+        if request.method == "GET":
+            try:
+                liked_products = Product.objects.filter(product_likes__customer = current_user)
+                json_likes = ProductSerializer(
+                liked_products, many=True, context={'request': request})
+                return Response(json_likes.data, status=status.HTTP_200_OK)
+                 
+            except Exception as ex:
+                return HttpResponseServerError(ex)
+
+        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
