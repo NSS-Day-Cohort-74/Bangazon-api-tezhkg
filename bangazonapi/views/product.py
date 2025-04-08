@@ -17,13 +17,13 @@ from rest_framework.parsers import MultiPartParser, FormParser
 class ProductSerializer(serializers.ModelSerializer):
     """JSON serializer for products"""
 
-    price = serializers.DecimalField(
-        max_digits=7,
-        decimal_places=2,
-        error_messages={
-            "invalid": "Please provide a valid price number between 0 and $17,500.",
-        },
-    )
+    # price = serializers.DecimalField(
+    #     max_digits=7,
+    #     decimal_places=2,
+    #     error_messages={
+    #         "invalid": "Please provide a valid price number between 0 and $17,500.",
+    #     },
+    # )
 
     class Meta:
         model = Product
@@ -46,13 +46,6 @@ class ProductSerializer(serializers.ModelSerializer):
         if value > 17500:
             raise serializers.ValidationError("Price cannot exceed $17,500")
         return value
-    
-    # currently doing for all requests.. should just be on retrieve.
-    # this is causing the all products view to break.
-    # Could we just have different serializers for different methods?
-    # For example, a ProductRetrieveSerializer(ProductSerializer)? profile.py uses multiple serializers.
-    # Then, add the is_liked serializer method field to just that child serializer?
-
 
 
 class ProductDetailSerializer(ProductSerializer):
@@ -417,7 +410,6 @@ class Products(ViewSet):
         
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-
     @action(methods=["get"], detail=False)
     def liked(self, request):
         current_user = Customer.objects.get(user=request.auth.user)
@@ -433,4 +425,3 @@ class Products(ViewSet):
                 return HttpResponseServerError(ex)
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-    
