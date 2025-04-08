@@ -412,6 +412,7 @@ class Products(ViewSet):
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+
     @action(methods=["get"], detail=False)
     def liked(self, request):
         current_user = Customer.objects.get(user=request.auth.user)
@@ -430,3 +431,4 @@ class Products(ViewSet):
                 return HttpResponseServerError(ex)
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
