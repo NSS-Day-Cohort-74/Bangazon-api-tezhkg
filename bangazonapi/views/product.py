@@ -17,13 +17,13 @@ from rest_framework.parsers import MultiPartParser, FormParser
 class ProductSerializer(serializers.ModelSerializer):
     """JSON serializer for products"""
 
-    price = serializers.DecimalField(
-        max_digits=7,
-        decimal_places=2,
-        error_messages={
-            "invalid": "Please provide a valid price number between 0 and $17,500.",
-        },
-    )
+    # price = serializers.DecimalField(
+    #     # max_digits=7,
+    #     # decimal_places=2,
+    #     # error_messages={
+    #     #     "invalid": "Please provide a valid price number between 0 and $17,500.",
+    #     # },
+    # )
 
     class Meta:
         model = Product
