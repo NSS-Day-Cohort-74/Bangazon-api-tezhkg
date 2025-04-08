@@ -9,7 +9,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Product, Customer, ProductCategory
+from bangazonapi.models import Product, Customer, ProductCategory, ProductLike
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 
@@ -46,6 +46,35 @@ class ProductSerializer(serializers.ModelSerializer):
         if value > 17500:
             raise serializers.ValidationError("Price cannot exceed $17,500")
         return value
+    
+    # currently doing for all requests.. should just be on retrieve.
+    # this is causing the all products view to break.
+    # Could we just have different serializers for different methods?
+    # For example, a ProductRetrieveSerializer(ProductSerializer)? profile.py uses multiple serializers.
+    # Then, add the is_liked serializer method field to just that child serializer?
+
+
+
+class ProductDetailSerializer(ProductSerializer):
+    is_liked = serializers.SerializerMethodField()
+
+    class Meta(ProductSerializer.Meta):
+        fields = ProductSerializer.Meta.fields + ('is_liked',)
+
+    def get_is_liked(self, obj):
+        # Get current request
+        request = self.context.get('request')
+        
+        # Use data from the request to find whether the current user likes the current product
+        # Get the current user
+        current_user = Customer.objects.get(user=request.auth.user)
+
+        # Use the related name to check if this product has a like from this customer
+        is_it_liked = ProductLike.objects.filter(customer=current_user,product=obj.pk).exists()
+        # If they do like the current product, return true
+        # If they do not like the current product, return false
+
+        return is_it_liked
 
 
 class Products(ViewSet):
@@ -198,7 +227,7 @@ class Products(ViewSet):
         """
         try:
             product = Product.objects.get(pk=pk)
-            serializer = ProductSerializer(product, context={"request": request})
+            serializer = ProductDetailSerializer(product, context={"request": request})
             return Response(serializer.data)
         except Exception as ex:
             return HttpResponseServerError(ex)
@@ -357,3 +386,51 @@ class Products(ViewSet):
             return Response(None, status=status.HTTP_204_NO_CONTENT)
 
         return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @action(methods=["post", "delete"], detail=True)
+    def like(self, request,pk=None):
+        current_user = Customer.objects.get(user=request.auth.user)
+        product_instance = Product.objects.get(pk=pk)
+        
+        if request.method == "POST":
+            product_like = ProductLike()
+            product_like.customer = current_user
+            product_like.product = product_instance
+
+            product_like.save()
+            return Response(None, status=status.HTTP_201_CREATED)
+        
+        if request.method == "DELETE":
+            try:
+                product_like = ProductLike.objects.get(customer=current_user,product=pk)
+                product_like.delete()
+
+                return Response({}, status=status.HTTP_204_NO_CONTENT)
+
+            except ProductLike.DoesNotExist as ex:
+                return Response({"message": ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+            
+            except Exception as ex:
+                return Response(
+                    {"message": ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        
+        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+
+    @action(methods=["get"], detail=False)
+    def liked(self, request):
+        current_user = Customer.objects.get(user=request.auth.user)
+
+        if request.method == "GET":
+            try:
+                liked_products = Product.objects.filter(product_likes__customer = current_user)
+                json_likes = ProductSerializer(
+                liked_products, many=True, context={'request': request})
+                return Response(json_likes.data, status=status.HTTP_200_OK)
+                 
+            except Exception as ex:
+                return HttpResponseServerError(ex)
+
+        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
