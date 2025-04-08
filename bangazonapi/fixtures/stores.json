@@ -1,0 +1,38 @@
+[
+    {
+      "model": "bangazonapi.store",
+      "pk": 1,
+      "fields": {
+        "name": "Tech Treasures",
+        "description": "Latest gadgets and tech accessories for all your electronic needs.",
+        "owner": 4
+      }
+    },
+    {
+      "model": "bangazonapi.store",
+      "pk": 2,
+      "fields": {
+        "name": "Culinary Corner",
+        "description": "Specialty kitchen supplies and gourmet ingredients for the home chef.",
+        "owner": 5
+      }
+    },
+    {
+      "model": "bangazonapi.store",
+      "pk": 3,
+      "fields": {
+        "name": "Outdoor Adventures",
+        "description": "Everything you need for hiking, camping, and exploring the great outdoors.",
+        "owner": 6
+      }
+    },
+    {
+      "model": "bangazonapi.store",
+      "pk": 4,
+      "fields": {
+        "name": "Vintage Classics",
+        "description": "Curated collection of vintage clothing, vinyl records, and nostalgic memorabilia.",
+        "owner": 7
+      }
+    }
+  ]

@@ -3,6 +3,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from .customer import Customer
 from .product import Product
 
+
 class Rating(models.Model):
 
     customer = models.ForeignKey(Customer, on_delete=models.DO_NOTHING,)

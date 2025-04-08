@@ -126,6 +126,14 @@ class Products(ViewSet):
                 }
             }
         """
+
+
+
+
+
+
+
+        
         data = request.data.copy()
         data["image_path"] = None
 
