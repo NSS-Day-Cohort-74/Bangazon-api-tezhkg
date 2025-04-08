@@ -13,4 +13,5 @@ python3 manage.py loaddata productrating
 python3 manage.py loaddata payment
 python3 manage.py loaddata order
 python3 manage.py loaddata order_product
+python3 manage.py loaddata productlikes
 python3 manage.py loaddata favoritesellers
