@@ -130,3 +130,33 @@ class ProductTests(APITestCase):
         self.assertEqual(len(json_response), 2)
 
     # TODO: Product can be rated. Assert average rating exists.
+
+    def test_rate_product(self):
+        self.test_create_product()
+
+        url = "/products/1/rate_product"
+
+        data = {"rating": 3}
+
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
+
+        response = self.client.post(url, data, format='json')
+        json_response = json.loads(response.content)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(json_response["message"], "Rating added successfully")
+
+        data = {"rating": 4}
+
+        response = self.client.post(url, data, format="json")
+        json_response = json.loads(response.content)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json_response["message"], "Rating updated successfully")
+        
+        url = "/products/1"
+
+        response = self.client.get(url, format='json')
+        json_response = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("average_rating", json_response)
+        self.assertEqual(json_response["average_rating"], 4.0)

@@ -9,7 +9,7 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Product, Customer, ProductCategory, ProductLike
+from bangazonapi.models import Product, Customer, ProductCategory, ProductLike, ProductRating
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
 
@@ -430,5 +430,23 @@ class Products(ViewSet):
             except Exception as ex:
                 return HttpResponseServerError(ex)
 
+        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+    @action(methods=["post"], detail=True)
+    def rate_product(self, request, pk=None):
+        current_user = Customer.objects.get(user=request.auth.user)
+        product_instance = Product.objects.get(pk=pk)
+
+        if request.method == "POST":
+            rating_value = request.data["rating"]
+
+            try:
+                product_rating = ProductRating.objects.get(customer=current_user, product=product_instance)
+                product_rating.rating = rating_value
+                product_rating.save()
+                return Response({"message": "Rating updated successfully"}, status=status.HTTP_200_OK)
+            except ProductRating.DoesNotExist:
+                ProductRating.objects.create(customer=current_user, product=product_instance, rating=rating_value)
+                return Response({"message": "Rating added successfully"}, status=status.HTTP_201_CREATED)
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
