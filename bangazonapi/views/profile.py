@@ -446,6 +446,6 @@ class ProfileSerializer(serializers.ModelSerializer):
     
     def get_favorite_sellers(self, obj):
         fav_sellers = Favorite.objects.filter(customer = obj)
-        if fav_sellers:
-            return FavoriteSerializer(fav_sellers, many=True).data
-        return None
+        stores = [favorite.store for favorite in fav_sellers if favorite.store]
+        return StoreSerializer(stores, many=True).data
+    
