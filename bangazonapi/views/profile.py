@@ -418,6 +418,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         if store: 
             return StoreSerializer(store).data
         return None
+   
 
 
 class FavoriteUserSerializer(serializers.HyperlinkedModelSerializer):

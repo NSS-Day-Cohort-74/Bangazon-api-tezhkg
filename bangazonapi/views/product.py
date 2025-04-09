@@ -12,6 +12,7 @@ from rest_framework import status
 from bangazonapi.models import Product, Customer, ProductCategory, ProductLike, ProductRating
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.contrib.auth.models import User
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -369,21 +370,22 @@ class Products(ViewSet):
         )
         return Response(serializer.data)
 
-    @action(methods=["post"], detail=True)
-    def recommend(self, request, pk=None):
-        """Recommend products to other users"""
+    # @action(methods=["post"], detail=True)
+    # def recommend(self, request, pk=None):
+    #     """Recommend products to other users"""
 
-        if request.method == "POST":
-            rec = Recommendation()
-            rec.recommender = Customer.objects.get(user=request.auth.user)
-            rec.customer = Customer.objects.get(user__id=request.data["recipient"])
-            rec.product = Product.objects.get(pk=pk)
+    #     if request.method == "POST":
+    #         rec = Recommendation()
+    #         rec.recommender = Customer.objects.get(user=request.auth.user)
+    #         the_user=User.objects.get(username=request.data["username"])
+    #         rec.customer = Customer.objects.get(user_id=the_user.id)
+    #         rec.product = Product.objects.get(pk=pk)
 
-            rec.save()
+    #         rec.save()
 
-            return Response(None, status=status.HTTP_204_NO_CONTENT)
+    #         return Response(None, status=status.HTTP_204_NO_CONTENT)
 
-        return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    #     return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @action(methods=["post", "delete"], detail=True)
     def like(self, request, pk=None):
@@ -434,6 +436,25 @@ class Products(ViewSet):
                     liked_products, many=True, context={"request": request}
                 )
                 return Response(json_likes.data, status=status.HTTP_200_OK)
+
+            except Exception as ex:
+                return HttpResponseServerError(ex)
+
+        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
+    @action(methods=["get"], detail=False)
+    def recommended(self, request):
+        current_user = Customer.objects.get(user=request.auth.user)
+
+        if request.method == "GET":
+            try:
+                recommended_products = Product.objects.filter(
+                    rec__recommender_id=current_user
+                )
+                json_rec = ProductSerializer(
+                    recommended_products, many=True, context={"request": request}
+                )
+                return Response(json_rec.data, status=status.HTTP_200_OK)
 
             except Exception as ex:
                 return HttpResponseServerError(ex)
