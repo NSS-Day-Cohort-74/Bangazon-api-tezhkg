@@ -15,3 +15,4 @@ python3 manage.py loaddata order
 python3 manage.py loaddata order_product
 python3 manage.py loaddata productlikes
 python3 manage.py loaddata favoritesellers
+python3 manage.py loaddata stores

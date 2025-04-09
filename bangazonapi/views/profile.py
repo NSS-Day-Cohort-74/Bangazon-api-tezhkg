@@ -9,10 +9,11 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.viewsets import ViewSet
 from bangazonapi.models import Order, Customer, Product
-from bangazonapi.models import OrderProduct, Favorite
+from bangazonapi.models import OrderProduct, Favorite, Store
 from bangazonapi.models import Recommendation
 from .product import ProductSerializer
 from .order import OrderSerializer
+from .store import StoreSerializer
 
 
 class Profile(ViewSet):
@@ -87,7 +88,7 @@ class Profile(ViewSet):
             current_user.recommends = Recommendation.objects.filter(
                 recommender=current_user
             )
-
+            
             serializer = ProfileSerializer(
                 current_user, many=False, context={"request": request}
             )
@@ -396,6 +397,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     user = UserSerializer(many=False)
     recommends = RecommenderSerializer(many=True)
+    store = serializers.SerializerMethodField()
 
     class Meta:
         model = Customer
@@ -407,8 +409,15 @@ class ProfileSerializer(serializers.ModelSerializer):
             "address",
             "payment_types",
             "recommends",
+            "store",
         )
         depth = 1
+
+    def get_store(self, obj):
+        store = Store.objects.filter(owner=obj).first()
+        if store: 
+            return StoreSerializer(store).data
+        return None
 
 
 class FavoriteUserSerializer(serializers.HyperlinkedModelSerializer):
