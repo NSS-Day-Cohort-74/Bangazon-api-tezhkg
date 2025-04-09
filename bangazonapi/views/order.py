@@ -28,6 +28,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
     """JSON serializer for customer orders"""
 
     lineitems = OrderLineItemSerializer(many=True)
+    completed_on = serializers.SerializerMethodField()
+    total = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -35,7 +38,29 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             view_name='order',
             lookup_field='id'
         )
-        fields = ('id', 'url', 'created_date', 'payment_type', 'customer', 'lineitems')
+        fields = (
+            'id', 
+            'url', 
+            'created_date', 
+            'payment_type', 
+            'customer', 
+            'lineitems',
+            'completed_on',
+            'total',
+            'status'
+            )
+        
+    def get_completed_on(self, obj):
+        if obj.payment_type:
+            return obj.payment_type.create_date
+        return None
+    
+    def get_total(self, obj):
+        lineitems = OrderProduct.objects.filter(order=obj)
+        return sum(item.product.price for item in lineitems)
+    
+    def get_status(self, obj):
+        return "complete" if obj.payment_type else "incomplete"
 
 
 class Orders(ViewSet):
@@ -142,7 +167,7 @@ class Orders(ViewSet):
             ]
         """
         customer = Customer.objects.get(user=request.auth.user)
-        orders = Order.objects.filter(customer=customer)
+        orders = Order.objects.filter(customer=customer, payment_type__isnull=False)
 
         payment = self.request.query_params.get('payment_id', None)
         if payment is not None:
