@@ -128,7 +128,18 @@ class Cart(ViewSet):
             final["order"]["products"] = product_list.data
             final["order"]["size"] = len(products_on_order)
 
-        except Order.DoesNotExist as ex:
-            return Response({'message': ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
-
+        except Order.DoesNotExist:
+            final = {
+                "order": {
+                    "id": None,
+                    "url": None,
+                    "created_date": None,
+                    "payment_type": None,
+                    "customer": None,
+                    "products": [],
+                    "size": 0,
+                    "message": "Your cart is empty. Start adding items!"
+                }
+            }
+            return Response(final["order"])
         return Response(final["order"])

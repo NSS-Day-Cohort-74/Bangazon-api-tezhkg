@@ -28,9 +28,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
     """JSON serializer for customer orders"""
 
     lineitems = OrderLineItemSerializer(many=True)
-    completed_on = serializers.SerializerMethodField()
     total = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
+    completed_on = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -49,11 +49,6 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             'total',
             'status'
             )
-        
-    def get_completed_on(self, obj):
-        if obj.payment_type:
-            return obj.payment_type.create_date
-        return None
     
     def get_total(self, obj):
         lineitems = OrderProduct.objects.filter(order=obj)
@@ -61,6 +56,11 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
     
     def get_status(self, obj):
         return "complete" if obj.payment_type else "incomplete"
+    
+    def get_completed_on(self, obj):
+        if obj.payment_type:
+            return datetime.datetime.now().strftime("%m/%d/%Y")
+        return None
 
 
 class Orders(ViewSet):
@@ -177,3 +177,20 @@ class Orders(ViewSet):
             orders, many=True, context={'request': request})
 
         return Response(json_orders.data)
+    
+    def destroy(self, request, pk=None):
+        try:
+            customer = Customer.objects.get(user=request.auth.user)
+            order = Order.objects.get(pk=pk, customer=customer)
+
+            OrderProduct.objects.filter(order=order).delete()
+
+            order.delete()
+
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
+        
+        except Order.DoesNotExist as ex:
+            return Response({"message": ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+        
+        except Exception as ex:
+            return Response({"message": ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
