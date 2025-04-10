@@ -11,3 +11,4 @@ from .customer import Customers
 from .user import Users
 from .productlike import ProductLike
 from .store import Stores
+from .report import Reports
