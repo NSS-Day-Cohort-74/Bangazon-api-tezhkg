@@ -12,6 +12,7 @@ from rest_framework import status
 from bangazonapi.models import Product, Customer, ProductCategory, ProductLike, ProductRating
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.contrib.auth.models import User
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -376,7 +377,8 @@ class Products(ViewSet):
         if request.method == "POST":
             rec = Recommendation()
             rec.recommender = Customer.objects.get(user=request.auth.user)
-            rec.customer = Customer.objects.get(user__id=request.data["recipient"])
+            the_user=User.objects.get(username=request.data["username"])
+            rec.customer = Customer.objects.get(user_id=the_user.id)
             rec.product = Product.objects.get(pk=pk)
 
             rec.save()
@@ -439,6 +441,7 @@ class Products(ViewSet):
                 return HttpResponseServerError(ex)
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    
     
     @action(methods=["post"], detail=True)
     def rate_product(self, request, pk=None):
