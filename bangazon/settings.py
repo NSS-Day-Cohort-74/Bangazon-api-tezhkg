@@ -71,8 +71,7 @@ CORS_ORIGIN_WHITELIST = ("http://localhost:3000", "http://127.0.0.1:3000")
 ROOT_URLCONF = "bangazon.urls"
 
 TEMPLATES = [
-    {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
+    {   "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": ["templates"],
         "APP_DIRS": True,
         "OPTIONS": {
