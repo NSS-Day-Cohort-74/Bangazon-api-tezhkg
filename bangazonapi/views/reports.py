@@ -4,7 +4,7 @@ from bangazonapi.models import Favorite, Store
 from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import action
 
-class Report(ViewSet):
+class Reports(ViewSet):
     
     @action(methods=["get"],detail=False)
     def favoritesellers(self,request):
