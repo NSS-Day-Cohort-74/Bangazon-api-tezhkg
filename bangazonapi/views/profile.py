@@ -195,10 +195,9 @@ class Profile(ViewSet):
                 ).data
                 cart["order"]["size"] = len(line_items.data)
 
-            except Order.DoesNotExist as ex:
-                return Response(
-                    {"message": ex.args[0]}, status=status.HTTP_404_NOT_FOUND
-                )
+            except Order.DoesNotExist:
+                final = {}
+                return Response(final)
 
             return Response(cart["order"])
 
