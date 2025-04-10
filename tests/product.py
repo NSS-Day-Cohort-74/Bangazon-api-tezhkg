@@ -102,13 +102,11 @@ class ProductTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response), 3)
 
-    # TODO: Delete product
-
     def test_delete_a_product(self):
         """
         Ensure we can delete a product
         """
-        # Create 2 Products
+        # Create 3 Products
         self.test_create_product()
         self.test_create_product()
         self.test_create_product()
@@ -129,8 +127,6 @@ class ProductTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response), 2)
 
-    # TODO: Product can be rated. Assert average rating exists.
-
     def test_rate_product(self):
         self.test_create_product()
 
@@ -138,9 +134,9 @@ class ProductTests(APITestCase):
 
         data = {"rating": 3}
 
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
 
-        response = self.client.post(url, data, format='json')
+        response = self.client.post(url, data, format="json")
         json_response = json.loads(response.content)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(json_response["message"], "Rating added successfully")
@@ -151,10 +147,10 @@ class ProductTests(APITestCase):
         json_response = json.loads(response.content)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json_response["message"], "Rating updated successfully")
-        
+
         url = "/products/1"
 
-        response = self.client.get(url, format='json')
+        response = self.client.get(url, format="json")
         json_response = json.loads(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)

@@ -198,10 +198,9 @@ class Profile(ViewSet):
                 ).data
                 cart["order"]["size"] = len(line_items.data)
 
-            except Order.DoesNotExist as ex:
-                return Response(
-                    {"message": ex.args[0]}, status=status.HTTP_404_NOT_FOUND
-                )
+            except Order.DoesNotExist:
+                final = {}
+                return Response(final)
 
             return Response(cart["order"])
 
@@ -268,7 +267,7 @@ class Profile(ViewSet):
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-    @action(methods=["get"], detail=False)
+    @action(methods=["get","post"], detail=False)
     def favoritesellers(self, request):
         """
         @api {GET} /profile/favoritesellers GET favorite sellers
@@ -319,10 +318,21 @@ class Profile(ViewSet):
         customer = Customer.objects.get(user=request.auth.user)
         favorites = Favorite.objects.filter(customer=customer)
 
-        serializer = FavoriteSerializer(
-            favorites, many=True, context={"request": request}
-        )
-        return Response(serializer.data)
+        if request.method == "GET":
+            serializer = FavoriteSerializer(
+                favorites, many=True, context={"request": request}
+            )
+            return Response(serializer.data)
+        
+        if request.method == "POST":
+            store_liked = Store.objects.get(pk=request.data["store_id"])
+            fav_seller = Favorite()
+            fav_seller.customer = customer
+            fav_seller.store = store_liked
+
+            fav_seller.save()
+            return Response(None, status=status.HTTP_201_CREATED)
+        
 
 
 class LineItemSerializer(serializers.HyperlinkedModelSerializer):
@@ -376,7 +386,20 @@ class ProfileProductSerializer(serializers.ModelSerializer):
             "name",
         )
 
+class FavoriteSerializer(serializers.HyperlinkedModelSerializer):
+    """JSON serializer for favorites
 
+    Arguments:
+        serializers
+    """
+
+    store = StoreSerializer(many=False)
+
+    class Meta:
+        model = Favorite
+        fields = ("id", "store")
+        depth = 2
+    
 class RecommenderSerializer(serializers.ModelSerializer):
     """JSON serializer for recommendations"""
 
@@ -389,6 +412,7 @@ class RecommenderSerializer(serializers.ModelSerializer):
             "product",
             "customer",
         )
+
 
 class RecommendationSerializer(serializers.ModelSerializer):
     """JSON serializer for recommendations"""
@@ -415,6 +439,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     recommends = RecommenderSerializer(many=True)
     recommendation_received = RecommendationSerializer(many=True)
     store = serializers.SerializerMethodField()
+    favorite_sellers = serializers.SerializerMethodField()
 
     class Meta:
         model = Customer
@@ -428,6 +453,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "recommends",
             "recommendation_received",
             "store",
+            "favorite_sellers"
         )
         depth = 1
 
@@ -438,52 +464,9 @@ class ProfileSerializer(serializers.ModelSerializer):
         return None
     
 
+    def get_favorite_sellers(self, obj):
+        fav_sellers = Favorite.objects.filter(customer = obj)
+        stores = [favorite.store for favorite in fav_sellers if favorite.store]
+        return StoreSerializer(stores, many=True).data
+    
 
-   
-
-
-class FavoriteUserSerializer(serializers.HyperlinkedModelSerializer):
-    """JSON serializer for favorite sellers user
-
-    Arguments:
-        serializers
-    """
-
-    class Meta:
-        model = User
-        fields = ("first_name", "last_name", "username")
-        depth = 1
-
-
-class FavoriteSellerSerializer(serializers.HyperlinkedModelSerializer):
-    """JSON serializer for favorite sellers
-
-    Arguments:
-        serializers
-    """
-
-    user = FavoriteUserSerializer(many=False)
-
-    class Meta:
-        model = Customer
-        fields = (
-            "id",
-            "url",
-            "user",
-        )
-        depth = 1
-
-
-class FavoriteSerializer(serializers.HyperlinkedModelSerializer):
-    """JSON serializer for favorites
-
-    Arguments:
-        serializers
-    """
-
-    seller = FavoriteSellerSerializer(many=False)
-
-    class Meta:
-        model = Favorite
-        fields = ("id", "seller")
-        depth = 2
