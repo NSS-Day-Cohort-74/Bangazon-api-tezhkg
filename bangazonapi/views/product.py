@@ -428,7 +428,7 @@ class Products(ViewSet):
         if request.method == "GET":
             try:
                 liked_products = Product.objects.filter(
-                    product_likes__customer=current_user
+                    likes__customer=current_user
                 )
                 json_likes = ProductSerializer(
                     liked_products, many=True, context={"request": request}
