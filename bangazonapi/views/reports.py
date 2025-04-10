@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from bangazonapi.models import Order
+from bangazonapi.models import Order, Product
 from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import action
 
@@ -34,3 +34,16 @@ class Reports(ViewSet):
             context = {"orders": orders, "report_title": "Incomplete Orders Report"}
 
             return render(request, "reports/incomplete_orders.html", context)
+        
+    @action(methods=["get"], detail=False) 
+    def inexpensiveproducts(self, request):
+      
+        products = Product.objects.filter(price__lte=999)
+
+      
+        context = {
+            "products": products,
+            "report_title": "Products Under $999"
+        }
+
+        return render(request, "reports/inexpensive_products.html", context)
