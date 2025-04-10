@@ -442,24 +442,6 @@ class Products(ViewSet):
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
     
-    @action(methods=["get"], detail=False)
-    def recommended(self, request):
-        current_user = Customer.objects.get(user=request.auth.user)
-
-        if request.method == "GET":
-            try:
-                recommended_products = Product.objects.filter(
-                    rec__recommender_id=current_user
-                )
-                json_rec = ProductSerializer(
-                    recommended_products, many=True, context={"request": request}
-                )
-                return Response(json_rec.data, status=status.HTTP_200_OK)
-
-            except Exception as ex:
-                return HttpResponseServerError(ex)
-
-        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
     
     @action(methods=["post"], detail=True)
     def rate_product(self, request, pk=None):
