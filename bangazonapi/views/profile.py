@@ -88,6 +88,9 @@ class Profile(ViewSet):
             current_user.recommends = Recommendation.objects.filter(
                 recommender=current_user
             )
+            current_user.recommendation_received = Recommendation.objects.filter(
+                customer=current_user
+            )
             
             serializer = ProfileSerializer(
                 current_user, many=False, context={"request": request}
@@ -401,7 +404,7 @@ class RecommenderSerializer(serializers.ModelSerializer):
     """JSON serializer for recommendations"""
 
     customer = CustomerSerializer()
-    product = ProfileProductSerializer()
+    product = ProductSerializer()
 
     class Meta:
         model = Recommendation
@@ -409,6 +412,21 @@ class RecommenderSerializer(serializers.ModelSerializer):
             "product",
             "customer",
         )
+
+
+class RecommendationSerializer(serializers.ModelSerializer):
+    """JSON serializer for recommendations"""
+
+    recommender = CustomerSerializer()
+    product = ProductSerializer()
+
+    class Meta:
+        model = Recommendation
+        fields = (
+            "product",
+            "recommender",
+        )
+
 
 class ProfileSerializer(serializers.ModelSerializer):
     """JSON serializer for customer profile
@@ -419,6 +437,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     user = UserSerializer(many=False)
     recommends = RecommenderSerializer(many=True)
+    recommendation_received = RecommendationSerializer(many=True)
     store = serializers.SerializerMethodField()
     favorite_sellers = serializers.SerializerMethodField()
 
@@ -432,6 +451,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "address",
             "payment_types",
             "recommends",
+            "recommendation_received",
             "store",
             "favorite_sellers"
         )
@@ -443,8 +463,10 @@ class ProfileSerializer(serializers.ModelSerializer):
             return StoreSerializer(store).data
         return None
     
+
     def get_favorite_sellers(self, obj):
         fav_sellers = Favorite.objects.filter(customer = obj)
         stores = [favorite.store for favorite in fav_sellers if favorite.store]
         return StoreSerializer(stores, many=True).data
     
+
