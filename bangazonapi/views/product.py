@@ -9,9 +9,16 @@ from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework import serializers
 from rest_framework import status
-from bangazonapi.models import Product, Customer, ProductCategory, ProductLike, ProductRating
+from bangazonapi.models import (
+    Product,
+    Customer,
+    ProductCategory,
+    ProductLike,
+    ProductRating,
+)
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
+from django.contrib.auth.models import User
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -44,7 +51,7 @@ class ProductDetailSerializer(ProductSerializer):
     is_liked = serializers.SerializerMethodField()
 
     class Meta(ProductSerializer.Meta):
-        fields = ProductSerializer.Meta.fields + ("is_liked",)
+        fields = ProductSerializer.Meta.fields + ("is_liked", "ratings", "likes")
 
     def get_is_liked(self, obj):
         # Get current request
@@ -127,13 +134,6 @@ class Products(ViewSet):
             }
         """
 
-
-
-
-
-
-
-        
         data = request.data.copy()
         data["image_path"] = None
 
@@ -376,7 +376,8 @@ class Products(ViewSet):
         if request.method == "POST":
             rec = Recommendation()
             rec.recommender = Customer.objects.get(user=request.auth.user)
-            rec.customer = Customer.objects.get(user__id=request.data["recipient"])
+            the_user = User.objects.get(username=request.data["username"])
+            rec.customer = Customer.objects.get(user_id=the_user.id)
             rec.product = Product.objects.get(pk=pk)
 
             rec.save()
@@ -420,7 +421,6 @@ class Products(ViewSet):
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-
     @action(methods=["get"], detail=False)
     def liked(self, request):
         current_user = Customer.objects.get(user=request.auth.user)
@@ -439,7 +439,7 @@ class Products(ViewSet):
                 return HttpResponseServerError(ex)
 
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-    
+
     @action(methods=["post"], detail=True)
     def rate_product(self, request, pk=None):
         current_user = Customer.objects.get(user=request.auth.user)
@@ -449,12 +449,21 @@ class Products(ViewSet):
             rating_value = request.data["rating"]
 
             try:
-                product_rating = ProductRating.objects.get(customer=current_user, product=product_instance)
+                product_rating = ProductRating.objects.get(
+                    customer=current_user, product=product_instance
+                )
                 product_rating.rating = rating_value
                 product_rating.save()
-                return Response({"message": "Rating updated successfully"}, status=status.HTTP_200_OK)
+                return Response(
+                    {"message": "Rating updated successfully"},
+                    status=status.HTTP_200_OK,
+                )
             except ProductRating.DoesNotExist:
-                ProductRating.objects.create(customer=current_user, product=product_instance, rating=rating_value)
-                return Response({"message": "Rating added successfully"}, status=status.HTTP_201_CREATED)
+                ProductRating.objects.create(
+                    customer=current_user, product=product_instance, rating=rating_value
+                )
+                return Response(
+                    {"message": "Rating added successfully"},
+                    status=status.HTTP_201_CREATED,
+                )
         return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-
