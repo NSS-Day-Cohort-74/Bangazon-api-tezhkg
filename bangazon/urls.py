@@ -21,6 +21,7 @@ router.register(r"stores", Stores, "store")
 router.register(r"reports", Reports, "report")
 
 
+
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [

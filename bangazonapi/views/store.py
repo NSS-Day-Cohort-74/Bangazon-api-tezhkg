@@ -13,6 +13,8 @@ class StoreSerializer(serializers.ModelSerializer):
     store_products = serializers.SerializerMethodField()
     size = serializers.SerializerMethodField()
     sold_products = serializers.SerializerMethodField()
+    name_of_owner = serializers.SerializerMethodField()
+
 
     class Meta:
         model = Store
@@ -24,6 +26,7 @@ class StoreSerializer(serializers.ModelSerializer):
             "size",
             "store_products",
             "sold_products",
+            "name_of_owner"
         )
         depth = 1
 
@@ -47,6 +50,15 @@ class StoreSerializer(serializers.ModelSerializer):
     def get_size(self, obj):
         count_of_products = obj.owner.products.count()
         return count_of_products
+    
+    def get_name_of_owner(self, obj):
+        user = obj.owner.user
+        first_name = user.first_name if user.first_name else ""
+        last_name = user.last_name if user.last_name else ""
+        if first_name == "" and last_name == "":
+            return user.username
+        
+        return f"{first_name} {last_name}".strip()
 
 
 class Stores(ViewSet):
