@@ -370,22 +370,22 @@ class Products(ViewSet):
         )
         return Response(serializer.data)
 
-    # @action(methods=["post"], detail=True)
-    # def recommend(self, request, pk=None):
-    #     """Recommend products to other users"""
+    @action(methods=["post"], detail=True)
+    def recommend(self, request, pk=None):
+        """Recommend products to other users"""
 
-    #     if request.method == "POST":
-    #         rec = Recommendation()
-    #         rec.recommender = Customer.objects.get(user=request.auth.user)
-    #         the_user=User.objects.get(username=request.data["username"])
-    #         rec.customer = Customer.objects.get(user_id=the_user.id)
-    #         rec.product = Product.objects.get(pk=pk)
+        if request.method == "POST":
+            rec = Recommendation()
+            rec.recommender = Customer.objects.get(user=request.auth.user)
+            the_user=User.objects.get(username=request.data["username"])
+            rec.customer = Customer.objects.get(user_id=the_user.id)
+            rec.product = Product.objects.get(pk=pk)
 
-    #         rec.save()
+            rec.save()
 
-    #         return Response(None, status=status.HTTP_204_NO_CONTENT)
+            return Response(None, status=status.HTTP_204_NO_CONTENT)
 
-    #     return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        return Response(None, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     @action(methods=["post", "delete"], detail=True)
     def like(self, request, pk=None):
