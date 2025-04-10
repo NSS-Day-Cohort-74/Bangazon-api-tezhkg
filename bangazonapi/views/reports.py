@@ -46,4 +46,17 @@ class Reports(ViewSet):
             "report_title": "Products Under $999"
         }
 
-        return render(request, "reports/inexpensive_products.html", context)
+        return render(request, "reports/products.html", context)
+
+    @action(methods=["get"], detail=False) 
+    def expensiveproducts(self, request):
+        
+            products = Product.objects.filter(price__gt=999)
+
+        
+            context = {
+                "products": products,
+                "report_title": "Products Over $999"
+            }
+
+            return render(request, "reports/products.html", context)
