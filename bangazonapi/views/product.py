@@ -2,6 +2,7 @@
 
 from rest_framework.decorators import action
 from bangazonapi.models.recommendation import Recommendation
+import uuid
 import base64
 from django.core.files.base import ContentFile
 from django.http import HttpResponseServerError
@@ -171,7 +172,7 @@ class Products(ViewSet):
             ext = format.split("/")[-1]
             data = ContentFile(
                 base64.b64decode(imgstr),
-                name=f'{new_product.id}-{request.data["name"]}.{ext}',
+                name=f'{new_product.id}-{request.data["name"]}-{uuid.uuid4()}.{ext}',
             )
 
             new_product.image_path = data
