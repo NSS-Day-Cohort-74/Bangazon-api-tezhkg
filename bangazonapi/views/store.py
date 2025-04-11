@@ -43,7 +43,8 @@ class StoreSerializer(serializers.ModelSerializer):
         sold_products = []
 
         for product in all_products:
-            sold_products.append(product.product)
+            if product.product not in sold_products:
+                sold_products.append(product.product)
 
         return ProductSerializer(sold_products, many=True).data
 
