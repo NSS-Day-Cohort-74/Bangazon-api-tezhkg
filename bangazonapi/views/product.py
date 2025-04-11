@@ -139,8 +139,17 @@ class Products(ViewSet):
 
         serializer = ProductSerializer(data=data, context={"request": request})
 
+        # Check for serializer or category errors:
+        errors = {}
         if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            errors = serializer.errors.copy()
+
+        # Add category error if needed:
+        if "category_id" in data and data["category_id"] == "0":
+            errors["category"] = ["Select a category"]
+
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
         new_product = Product()
         new_product.name = request.data["name"]
@@ -427,9 +436,7 @@ class Products(ViewSet):
 
         if request.method == "GET":
             try:
-                liked_products = Product.objects.filter(
-                    likes__customer=current_user
-                )
+                liked_products = Product.objects.filter(likes__customer=current_user)
                 json_likes = ProductSerializer(
                     liked_products, many=True, context={"request": request}
                 )
