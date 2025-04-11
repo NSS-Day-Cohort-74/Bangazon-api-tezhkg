@@ -315,8 +315,8 @@ class Profile(ViewSet):
                 }
             ]
         """
-        customer = Customer.objects.get(user=request.auth.user)
-        favorites = Favorite.objects.filter(customer=customer)
+        current_user = Customer.objects.get(user=request.auth.user)
+        favorites = Favorite.objects.filter(customer=current_user)
 
         if request.method == "GET":
             serializer = FavoriteSerializer(
@@ -327,19 +327,17 @@ class Profile(ViewSet):
         if request.method == "POST":
             store_liked = Store.objects.get(pk=request.data["store_id"])
 
-            try:
-                if Favorite.objects.filter(customer=customer, store=store_liked).exists():
-                    return Response({"message": "This store has already been liked by user."}, status=status.HTTP_409_CONFLICT)
-            
-            except Favorite.DoesNotExist:    
-                fav_seller = Favorite()
-                fav_seller.customer = customer
-                fav_seller.store = store_liked
+            if Favorite.objects.filter(customer=current_user, store=store_liked).exists():
+                return Response({"message": "This store has already been liked by user."}, status=status.HTTP_409_CONFLICT)
+        
+            fav_seller = Favorite()
+            fav_seller.customer = current_user
+            fav_seller.store = store_liked
 
-                fav_seller.save()
-                return Response(None, status=status.HTTP_201_CREATED)
+            fav_seller.save()
+            return Response(None, status=status.HTTP_201_CREATED)
             
-            return Response({}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
         
 
