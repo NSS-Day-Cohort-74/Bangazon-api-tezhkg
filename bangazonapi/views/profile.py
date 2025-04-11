@@ -315,8 +315,8 @@ class Profile(ViewSet):
                 }
             ]
         """
-        customer = Customer.objects.get(user=request.auth.user)
-        favorites = Favorite.objects.filter(customer=customer)
+        current_user = Customer.objects.get(user=request.auth.user)
+        favorites = Favorite.objects.filter(customer=current_user)
 
         if request.method == "GET":
             serializer = FavoriteSerializer(
@@ -325,21 +325,59 @@ class Profile(ViewSet):
             return Response(serializer.data)
         
         if request.method == "POST":
+
             store_liked = Store.objects.get(pk=request.data["store_id"])
+            if Favorite.objects.filter(customer=current_user, store=store_liked).exists():
+                return Response({"message": "This store has already been liked by user."}, status=status.HTTP_409_CONFLICT)
+                
+            fav_seller = Favorite()
+            fav_seller.customer = current_user
+            fav_seller.store = store_liked
+
+            fav_seller.save()
+            return Response(None, status=status.HTTP_201_CREATED)
+            
+        return Response({}, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(methods=["get"], detail=False)
+    def favorited(self, request):
+        current_user = Customer.objects.get(user=request.auth.user)
+
+        if request.method == "GET":
+            try:
+                favorited_stores = Store.objects.filter(favorites__customer=current_user)
+                json_favorite = StoreSerializer(favorited_stores, many=True, context={"request": request})
+                return Response(json_favorite.data, status=status.HTTP_200_OK)
+            except Exception as ex:
+                return HttpResponseServerError(ex)
+            
+        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+        
+    
+    @action(methods=["delete"], detail=True)
+    def unfavorite(self, request, pk=None):
+
+        if request.method == "DELETE":
+            current_user = Customer.objects.get(user=request.auth.user)
 
             try:
-                if Favorite.objects.filter(customer=customer, store=store_liked).exists():
-                    return Response({"message": "This store has already been liked by user."}, status=status.HTTP_409_CONFLICT)
-            
-            except Favorite.DoesNotExist:    
-                fav_seller = Favorite()
-                fav_seller.customer = customer
-                fav_seller.store = store_liked
+                unfavorite_store = Store.objects.get(pk=pk)
+                fav_seller = Favorite.objects.get(customer=current_user, store=unfavorite_store)
+                fav_seller.delete()
 
-                fav_seller.save()
-                return Response(None, status=status.HTTP_201_CREATED)
+                return Response({}, status=status.HTTP_204_NO_CONTENT)
             
-            return Response({}, status=status.HTTP_400_BAD_REQUEST)
+            except Favorite.DoesNotExist as ex:
+                return Response({"message": ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+            
+            except Store.DoesNotExist as ex:
+                return Response({"message": ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+
+            except Exception as ex:
+                return Response({"message": ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
 
         
 
@@ -404,10 +442,21 @@ class FavoriteSerializer(serializers.HyperlinkedModelSerializer):
 
     store = StoreSerializer(many=False)
 
+    is_favorite = serializers.SerializerMethodField()
+
     class Meta:
         model = Favorite
-        fields = ("id", "store")
+        fields = ("id", "store", "is_favorite")
         depth = 2
+
+    def get_is_favorite(self, obj):
+        request = self.context.get("request")
+
+        current_user = Customer.objects.get(user=request.auth.user)
+
+        is_it_favorite = current_user.favorited_stores.filter(store=obj.store).exists()
+
+        return is_it_favorite
     
 class RecommenderSerializer(serializers.ModelSerializer):
     """JSON serializer for recommendations"""
