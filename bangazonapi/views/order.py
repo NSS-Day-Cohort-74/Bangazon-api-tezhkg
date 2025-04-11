@@ -52,7 +52,7 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
     
     def get_total(self, obj):
         lineitems = OrderProduct.objects.filter(order=obj)
-        return sum(item.product.price for item in lineitems)
+        return round(sum(item.product.price for item in lineitems), 2)
     
     def get_status(self, obj):
         return "complete" if obj.payment_type else "incomplete"
