@@ -455,12 +455,14 @@ class Products(ViewSet):
 
         if request.method == "POST":
             rating_value = request.data["rating"]
+            review_text = request.data["review"]
 
             try:
                 product_rating = ProductRating.objects.get(
                     customer=current_user, product=product_instance
                 )
                 product_rating.rating = rating_value
+                product_rating.review = review_text
                 product_rating.save()
                 return Response(
                     {"message": "Rating updated successfully"},
@@ -468,7 +470,7 @@ class Products(ViewSet):
                 )
             except ProductRating.DoesNotExist:
                 ProductRating.objects.create(
-                    customer=current_user, product=product_instance, rating=rating_value
+                    customer=current_user, product=product_instance, rating=rating_value, review=review_text
                 )
                 return Response(
                     {"message": "Rating added successfully"},

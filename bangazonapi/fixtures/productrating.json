@@ -5,7 +5,8 @@
         "fields": {
             "product": 50,
             "customer": 4,
-            "rating": 4
+            "rating": 4,
+            "review": "this is a nice car"
         }
     },
     {
@@ -14,7 +15,8 @@
         "fields": {
             "product": 50,
             "customer": 5,
-            "rating": 3
+            "rating": 3,
+            "review": "it's okay"
         }
     },
     {
@@ -23,7 +25,8 @@
         "fields": {
             "product": 50,
             "customer": 6,
-            "rating": 5
+            "rating": 5,
+            "review": "love this car!"
         }
     },
     {
@@ -32,7 +35,8 @@
         "fields": {
             "product": 50,
             "customer": 7,
-            "rating": 1
+            "rating": 1,
+            "review": "this car is terrible"
         }
     }
 ]
