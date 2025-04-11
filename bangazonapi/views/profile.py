@@ -326,12 +326,18 @@ class Profile(ViewSet):
         
         if request.method == "POST":
             store_liked = Store.objects.get(pk=request.data["store_id"])
-            fav_seller = Favorite()
-            fav_seller.customer = customer
-            fav_seller.store = store_liked
 
-            fav_seller.save()
-            return Response(None, status=status.HTTP_201_CREATED)
+            try:
+                if Favorite.objects.filter(customer=customer, store=store_liked).exists():
+                    return Response({"message": "This store has already been liked by user."}, status=status.HTTP_409_CONFLICT)
+            
+            except Favorite.DoesNotExist:    
+                fav_seller = Favorite()
+                fav_seller.customer = customer
+                fav_seller.store = store_liked
+
+                fav_seller.save()
+                return Response(None, status=status.HTTP_201_CREATED)
         
 
 
