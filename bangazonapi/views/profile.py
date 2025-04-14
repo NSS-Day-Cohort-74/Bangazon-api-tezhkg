@@ -338,20 +338,6 @@ class Profile(ViewSet):
             return Response(None, status=status.HTTP_201_CREATED)
             
         return Response({}, status=status.HTTP_400_BAD_REQUEST)
-    
-    @action(methods=["get"], detail=False)
-    def favorited(self, request):
-        current_user = Customer.objects.get(user=request.auth.user)
-
-        if request.method == "GET":
-            try:
-                favorited_stores = Store.objects.filter(favorites__customer=current_user)
-                json_favorite = StoreSerializer(favorited_stores, many=True, context={"request": request})
-                return Response(json_favorite.data, status=status.HTTP_200_OK)
-            except Exception as ex:
-                return HttpResponseServerError(ex)
-            
-        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
         
     
     @action(methods=["delete"], detail=True)
@@ -442,21 +428,11 @@ class FavoriteSerializer(serializers.HyperlinkedModelSerializer):
 
     store = StoreSerializer(many=False)
 
-    is_favorite = serializers.SerializerMethodField()
-
     class Meta:
         model = Favorite
-        fields = ("id", "store", "is_favorite")
+        fields = ("id", "store")
         depth = 2
 
-    def get_is_favorite(self, obj):
-        request = self.context.get("request")
-
-        current_user = Customer.objects.get(user=request.auth.user)
-
-        is_it_favorite = current_user.favorited_stores.filter(store=obj.store).exists()
-
-        return is_it_favorite
     
 class RecommenderSerializer(serializers.ModelSerializer):
     """JSON serializer for recommendations"""
