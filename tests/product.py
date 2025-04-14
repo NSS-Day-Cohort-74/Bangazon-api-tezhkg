@@ -132,7 +132,7 @@ class ProductTests(APITestCase):
 
         url = "/products/1/rate_product"
 
-        data = {"rating": 3}
+        data = {"rating": 3, "review": "good"}
 
         self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
 
@@ -141,7 +141,7 @@ class ProductTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(json_response["message"], "Rating added successfully")
 
-        data = {"rating": 4}
+        data = {"rating": 4, "review": "great"}
 
         response = self.client.post(url, data, format="json")
         json_response = json.loads(response.content)
