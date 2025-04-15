@@ -5,7 +5,7 @@ from rest_framework import serializers
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from bangazonapi.models import Customer, Product, Store, OrderProduct
+from bangazonapi.models import Customer, Product, Store, OrderProduct, Favorite
 from .product import ProductSerializer
 
 
@@ -26,7 +26,7 @@ class StoreSerializer(serializers.ModelSerializer):
             "size",
             "store_products",
             "sold_products",
-            "name_of_owner"
+            "name_of_owner",
         )
         depth = 1
 
@@ -60,6 +60,22 @@ class StoreSerializer(serializers.ModelSerializer):
             return user.username
         
         return f"{first_name} {last_name}".strip()
+    
+class StoreDetailSerializer(StoreSerializer):
+    is_favorite = serializers.SerializerMethodField()
+
+    class Meta(StoreSerializer.Meta):
+        fields = StoreSerializer.Meta.fields + ("is_favorite", "favorites")
+
+    
+    def get_is_favorite(self, obj):
+        request = self.context.get("request")
+
+        current_user = Customer.objects.get(user=request.auth.user)
+
+        is_it_favorite = Favorite.objects.filter(customer=current_user, store=obj.pk).exists()
+
+        return is_it_favorite
 
 
 class Stores(ViewSet):
@@ -103,7 +119,7 @@ class Stores(ViewSet):
 
         try:
             store = Store.objects.get(pk=pk)
-            serializer = StoreSerializer(
+            serializer = StoreDetailSerializer(
                 store, many=False, context={"request": request}
             )
             return Response(serializer.data)

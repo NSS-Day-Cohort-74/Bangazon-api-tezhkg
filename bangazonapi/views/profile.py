@@ -325,11 +325,11 @@ class Profile(ViewSet):
             return Response(serializer.data)
         
         if request.method == "POST":
-            store_liked = Store.objects.get(pk=request.data["store_id"])
 
+            store_liked = Store.objects.get(pk=request.data["store_id"])
             if Favorite.objects.filter(customer=current_user, store=store_liked).exists():
                 return Response({"message": "This store has already been liked by user."}, status=status.HTTP_409_CONFLICT)
-        
+                
             fav_seller = Favorite()
             fav_seller.customer = current_user
             fav_seller.store = store_liked
@@ -338,6 +338,31 @@ class Profile(ViewSet):
             return Response(None, status=status.HTTP_201_CREATED)
             
         return Response({}, status=status.HTTP_400_BAD_REQUEST)
+        
+    
+    @action(methods=["delete"], detail=True)
+    def unfavorite(self, request, pk=None):
+
+        if request.method == "DELETE":
+            current_user = Customer.objects.get(user=request.auth.user)
+
+            try:
+                unfavorite_store = Store.objects.get(pk=pk)
+                fav_seller = Favorite.objects.get(customer=current_user, store=unfavorite_store)
+                fav_seller.delete()
+
+                return Response({}, status=status.HTTP_204_NO_CONTENT)
+            
+            except Favorite.DoesNotExist as ex:
+                return Response({"message": ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+            
+            except Store.DoesNotExist as ex:
+                return Response({"message": ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+
+            except Exception as ex:
+                return Response({"message": ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+        return Response({}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
         
 
@@ -406,6 +431,7 @@ class FavoriteSerializer(serializers.HyperlinkedModelSerializer):
         model = Favorite
         fields = ("id", "store")
         depth = 2
+
     
 class RecommenderSerializer(serializers.ModelSerializer):
     """JSON serializer for recommendations"""
