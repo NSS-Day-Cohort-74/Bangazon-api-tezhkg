@@ -16,6 +16,7 @@ from bangazonapi.models import (
     ProductCategory,
     ProductLike,
     ProductRating,
+    Store
 )
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -50,9 +51,14 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class ProductDetailSerializer(ProductSerializer):
     is_liked = serializers.SerializerMethodField()
+    store_id = serializers.SerializerMethodField()
 
     class Meta(ProductSerializer.Meta):
-        fields = ProductSerializer.Meta.fields + ("is_liked", "ratings", "likes")
+        fields = ProductSerializer.Meta.fields + ("is_liked", "ratings", "likes", "customer", "store_id", "category")
+
+    def get_store_id(self, obj):
+        store = Store.objects.get(owner=obj.customer).id
+        return store
 
     def get_is_liked(self, obj):
         # Get current request
@@ -337,6 +343,7 @@ class Products(ViewSet):
         number_sold = self.request.query_params.get("number_sold", None)
         min_price = self.request.query_params.get("min_price", None)
         location = self.request.query_params.get("location", None)
+        name = self.request.query_params.get("name", None)
 
         if order is not None:
             order_filter = order
@@ -373,6 +380,9 @@ class Products(ViewSet):
 
         if location is not None:
             products = products.filter(location__contains=location)
+        
+        if name is not None:
+            products = products.filter(name__icontains = name)
 
         serializer = ProductSerializer(
             products, many=True, context={"request": request}
