@@ -1,15 +1,17 @@
 """View module for handling requests about products"""
 
-from rest_framework.decorators import action
-from bangazonapi.models.recommendation import Recommendation
 import uuid
 import base64
 from django.core.files.base import ContentFile
 from django.http import HttpResponseServerError
-from rest_framework.viewsets import ViewSet
-from rest_framework.response import Response
+from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework import status
+from rest_framework.viewsets import ViewSet
+from rest_framework.response import Response
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from bangazonapi.models.recommendation import Recommendation
 from bangazonapi.models import (
     Product,
     Customer,
@@ -18,10 +20,6 @@ from bangazonapi.models import (
     ProductRating,
     Store
 )
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-from rest_framework.parsers import MultiPartParser, FormParser
-from django.contrib.auth.models import User
-
 
 class ProductSerializer(serializers.ModelSerializer):
     """JSON serializer for products"""
@@ -57,7 +55,10 @@ class ProductDetailSerializer(ProductSerializer):
         fields = ProductSerializer.Meta.fields + ("is_liked", "ratings", "likes", "customer", "store_id", "category")
 
     def get_store_id(self, obj):
-        store = Store.objects.get(owner=obj.customer).id
+        try:
+            store = Store.objects.get(owner=obj.customer).id
+        except:
+            store = None
         return store
 
     def get_is_liked(self, obj):
@@ -265,14 +266,31 @@ class Products(ViewSet):
         product.price = request.data["price"]
         product.description = request.data["description"]
         product.quantity = request.data["quantity"]
-        product.created_date = request.data["created_date"]
+        product.created_date = product.created_date
         product.location = request.data["location"]
+
+        if float(product.price) > 17500:
+            return Response(
+                {"price": "Price cannot exceed $17,500"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         customer = Customer.objects.get(user=request.auth.user)
         product.customer = customer
 
         product_category = ProductCategory.objects.get(pk=request.data["category_id"])
         product.category = product_category
+
+        if "image_path" in request.data:
+            format, imgstr = request.data["image_path"].split(";base64,")
+            ext = format.split("/")[-1]
+            data = ContentFile(
+                base64.b64decode(imgstr),
+                name=f'{product.id}-{request.data["name"]}-{uuid.uuid4()}.{ext}',
+            )
+
+            product.image_path = data
+
         product.save()
 
         return Response({}, status=status.HTTP_204_NO_CONTENT)
