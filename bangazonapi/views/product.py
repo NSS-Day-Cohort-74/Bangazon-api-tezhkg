@@ -266,6 +266,12 @@ class Products(ViewSet):
         product.created_date = product.created_date
         product.location = request.data["location"]
 
+        if float(product.price) > 17500:
+            return Response(
+                {"price": "Price cannot exceed $17,500"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         customer = Customer.objects.get(user=request.auth.user)
         product.customer = customer
 
