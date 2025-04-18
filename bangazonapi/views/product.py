@@ -55,7 +55,10 @@ class ProductDetailSerializer(ProductSerializer):
         fields = ProductSerializer.Meta.fields + ("is_liked", "ratings", "likes", "customer", "store_id", "category")
 
     def get_store_id(self, obj):
-        store = Store.objects.get(owner=obj.customer).id
+        try:
+            store = Store.objects.get(owner=obj.customer).id
+        except:
+            store = None
         return store
 
     def get_is_liked(self, obj):

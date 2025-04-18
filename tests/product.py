@@ -2,6 +2,7 @@ import json
 import datetime
 from rest_framework import status
 from rest_framework.test import APITestCase
+import pdb
 
 
 class ProductTests(APITestCase):
@@ -45,7 +46,7 @@ class ProductTests(APITestCase):
             "quantity": 60,
             "description": "It flies high",
             "category_id": 1,
-            "location": "Pittsburgh",
+            "location": "Pittsburgh"
         }
         self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
         response = self.client.post(url, data, format="json")
@@ -128,6 +129,7 @@ class ProductTests(APITestCase):
         self.assertEqual(len(json_response), 2)
 
     def test_rate_product(self):
+       
         self.test_create_product()
 
         url = "/products/1/rate_product"
