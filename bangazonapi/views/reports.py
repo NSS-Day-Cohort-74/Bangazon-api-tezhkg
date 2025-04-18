@@ -3,9 +3,16 @@ from django.contrib.auth.models import User
 from bangazonapi.models import Order, Product, Favorite, Store
 from rest_framework.viewsets import ViewSet
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 
 class Reports(ViewSet):
-    
+    #In this approach, I decided to add the use TokenAuthentication and IsAuthenticated from the DRF, 
+    # and then add authentication_classes and permission_classes to the ViewSet.
+    #This should require all report endpoints to require a valid auth token.
+    authentication_classes = [SessionAuthentication, TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
     @action(methods=["get"],detail=False)
     def favoritesellers(self,request):
         #Get the customer_id to find the user information and create the report title variable
