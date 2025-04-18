@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+    <head>
+
+    </head>
+    <body>
+        <h1>{{ report_title }}</h1>
+        {% if stores %}
+            {% for store in stores %}
+            <li>{{store}}</li>
+            {% endfor %}
+        {% else %}
+            <p class="no-sellers"> No Favorite Sellers at this time.</p>
+        {% endif %}
+    </body>
+</html>

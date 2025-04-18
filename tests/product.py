@@ -2,6 +2,7 @@ import json
 import datetime
 from rest_framework import status
 from rest_framework.test import APITestCase
+import pdb
 
 
 class ProductTests(APITestCase):
@@ -10,18 +11,25 @@ class ProductTests(APITestCase):
         Create a new account and create sample category
         """
         url = "/register"
-        data = {"username": "steve", "password": "Admin8*", "email": "steve@stevebrownlee.com",
-                "address": "100 Infinity Way", "phone_number": "555-1212", "first_name": "Steve", "last_name": "Brownlee"}
-        response = self.client.post(url, data, format='json')
+        data = {
+            "username": "steve",
+            "password": "Admin8*",
+            "email": "steve@stevebrownlee.com",
+            "address": "100 Infinity Way",
+            "phone_number": "555-1212",
+            "first_name": "Steve",
+            "last_name": "Brownlee",
+        }
+        response = self.client.post(url, data, format="json")
         json_response = json.loads(response.content)
         self.token = json_response["token"]
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         url = "/productcategories"
         data = {"name": "Sporting Goods"}
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
 
-        response = self.client.post(url, data, format='json')
+        response = self.client.post(url, data, format="json")
         json_response = json.loads(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -40,8 +48,8 @@ class ProductTests(APITestCase):
             "category_id": 1,
             "location": "Pittsburgh"
         }
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
-        response = self.client.post(url, data, format='json')
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
+        response = self.client.post(url, data, format="json")
         json_response = json.loads(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -65,13 +73,13 @@ class ProductTests(APITestCase):
             "description": "It flies very high",
             "category_id": 1,
             "created_date": datetime.date.today(),
-            "location": "Pittsburgh"
+            "location": "Pittsburgh",
         }
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token)
-        response = self.client.put(url, data, format='json')
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
+        response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-        response = self.client.get(url, data, format='json')
+        response = self.client.get(url, data, format="json")
         json_response = json.loads(response.content)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(json_response["name"], "Kite")
@@ -90,11 +98,63 @@ class ProductTests(APITestCase):
 
         url = "/products"
 
-        response = self.client.get(url, None, format='json')
+        response = self.client.get(url, None, format="json")
         json_response = json.loads(response.content)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(json_response), 3)
 
-    # TODO: Delete product
+    def test_delete_a_product(self):
+        """
+        Ensure we can delete a product
+        """
+        # Create 3 Products
+        self.test_create_product()
+        self.test_create_product()
+        self.test_create_product()
 
-    # TODO: Product can be rated. Assert average rating exists.
+        # Delete first product
+        url = "/products/1"
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Get deleted product, make sure it cannot be found.
+        response = self.client.get(url, None, format="json")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+        # Get list of all products, make sure there are only 2 there.
+        response = self.client.get("/products", None, format="json")
+        json_response = json.loads(response.content)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(json_response), 2)
+
+    def test_rate_product(self):
+       
+        self.test_create_product()
+
+        url = "/products/1/rate_product"
+
+        data = {"rating": 3, "review": "good"}
+
+        self.client.credentials(HTTP_AUTHORIZATION="Token " + self.token)
+
+        response = self.client.post(url, data, format="json")
+        json_response = json.loads(response.content)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(json_response["message"], "Rating added successfully")
+
+        data = {"rating": 4, "review": "great"}
+
+        response = self.client.post(url, data, format="json")
+        json_response = json.loads(response.content)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json_response["message"], "Rating updated successfully")
+
+        url = "/products/1"
+
+        response = self.client.get(url, format="json")
+        json_response = json.loads(response.content)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("average_rating", json_response)
+        self.assertEqual(json_response["average_rating"], 4.0)

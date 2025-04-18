@@ -23,6 +23,7 @@ lazy-object-proxy = "^1.10.0"
 mccabe = "^0.7.0"
 pycodestyle = "^2.11.1"
 six = "^1.16.0"
+setuptools = "^78.1.0"
 
 
 [build-system]

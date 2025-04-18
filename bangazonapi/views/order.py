@@ -28,6 +28,9 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
     """JSON serializer for customer orders"""
 
     lineitems = OrderLineItemSerializer(many=True)
+    total = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+    completed_on = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -35,7 +38,29 @@ class OrderSerializer(serializers.HyperlinkedModelSerializer):
             view_name='order',
             lookup_field='id'
         )
-        fields = ('id', 'url', 'created_date', 'payment_type', 'customer', 'lineitems')
+        fields = (
+            'id', 
+            'url', 
+            'created_date', 
+            'payment_type', 
+            'customer', 
+            'lineitems',
+            'completed_on',
+            'total',
+            'status'
+            )
+    
+    def get_total(self, obj):
+        lineitems = OrderProduct.objects.filter(order=obj)
+        return round(sum(item.product.price for item in lineitems), 2)
+    
+    def get_status(self, obj):
+        return "complete" if obj.payment_type else "incomplete"
+    
+    def get_completed_on(self, obj):
+        if obj.payment_type:
+            return datetime.datetime.now().strftime("%m/%d/%Y")
+        return None
 
 
 class Orders(ViewSet):
@@ -104,7 +129,9 @@ class Orders(ViewSet):
         """
         customer = Customer.objects.get(user=request.auth.user)
         order = Order.objects.get(pk=pk, customer=customer)
-        order.payment_type = request.data["payment_type"]
+        payment = Payment.objects.get(pk=request.data["payment_type"])
+        order.payment_type = payment
+
         order.save()
 
         return Response({}, status=status.HTTP_204_NO_CONTENT)
@@ -140,7 +167,7 @@ class Orders(ViewSet):
             ]
         """
         customer = Customer.objects.get(user=request.auth.user)
-        orders = Order.objects.filter(customer=customer)
+        orders = Order.objects.filter(customer=customer, payment_type__isnull=False)
 
         payment = self.request.query_params.get('payment_id', None)
         if payment is not None:
@@ -150,3 +177,20 @@ class Orders(ViewSet):
             orders, many=True, context={'request': request})
 
         return Response(json_orders.data)
+    
+    def destroy(self, request, pk=None):
+        try:
+            customer = Customer.objects.get(user=request.auth.user)
+            order = Order.objects.get(pk=pk, customer=customer)
+
+            OrderProduct.objects.filter(order=order).delete()
+
+            order.delete()
+
+            return Response({}, status=status.HTTP_204_NO_CONTENT)
+        
+        except Order.DoesNotExist as ex:
+            return Response({"message": ex.args[0]}, status=status.HTTP_404_NOT_FOUND)
+        
+        except Exception as ex:
+            return Response({"message": ex.args[0]}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
